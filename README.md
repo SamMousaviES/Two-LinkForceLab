@@ -18,6 +18,11 @@ python -m pip install -r requirements.txt
 python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721
 ```
 
+Flags:
+- `--scenarios`: path to the JSON input file that defines geometry and motion scenarios. Default: `scenarios.json`
+- `--output-dir`: directory where plots, CSV, insight report, and animations are written. Default: `output`
+- `--steps`: number of simulation samples over one full `AB` rotation (`0-360 deg`). Default: `721`
+
 ## Generated outputs
 - `output/plots/*.png`: one line plot per combination.
 - `output/all_combinations_grid.png`: comparison grid for all combinations.
