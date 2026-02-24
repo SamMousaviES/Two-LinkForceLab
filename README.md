@@ -18,10 +18,17 @@ python -m pip install -r requirements.txt
 python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721
 ```
 
+Example for much longer animations:
+```bash
+python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721 --animation-cycles 8 --animation-fps 20
+```
+
 Flags:
 - `--scenarios`: path to the JSON input file that defines geometry and motion scenarios. Default: `scenarios.json`
 - `--output-dir`: directory where plots, CSV, insight report, and animations are written. Default: `output`
 - `--steps`: number of simulation samples over one full `AB` rotation (`0-360 deg`). Default: `721`
+- `--animation-cycles`: number of full mechanism cycles saved in each GIF. Default: `1`
+- `--animation-fps`: frame rate of saved GIF files. Default: `25`
 
 ## Generated outputs
 - `output/plots/*.png`: one line plot per combination.

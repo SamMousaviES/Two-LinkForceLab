@@ -333,13 +333,25 @@ def infer_primary_driver(results: list[SimulationResult]) -> tuple[str, dict[str
     return primary_driver, correlations
 
 
-def animate_mechanism(result: SimulationResult, output_path: Path, title: str) -> None:
+def animate_mechanism(
+    result: SimulationResult,
+    output_path: Path,
+    title: str,
+    cycles: int = 1,
+    fps: int = 25,
+) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if cycles < 1:
+        raise ValueError("Animation cycles must be >= 1.")
+    if fps < 1:
+        raise ValueError("Animation fps must be >= 1.")
 
     total_length = result.length_ab + result.length_bc
     half_size = 1.2 * total_length
     step = max(1, len(result.theta_deg) // 180)
     frame_indices = np.arange(0, len(result.theta_deg), step, dtype=int)
+    repeated_frames = np.tile(frame_indices, cycles)
 
     fig, axis = plt.subplots(figsize=(6.0, 6.0))
     axis.set_xlim(-half_size, half_size)
@@ -387,12 +399,12 @@ def animate_mechanism(result: SimulationResult, output_path: Path, title: str) -
     animation = FuncAnimation(
         fig,
         update,
-        frames=frame_indices,
+        frames=repeated_frames,
         interval=35,
         blit=True,
         repeat=True,
     )
-    animation.save(output_path, writer=PillowWriter(fps=25))
+    animation.save(output_path, writer=PillowWriter(fps=fps))
     plt.close(fig)
 
 
@@ -424,4 +436,3 @@ def _validate_motion(scenario: MotionScenario) -> None:
         raise ValueError(f"Motion '{scenario.name}' requires omega_ab > 0.")
     if scenario.omega_bc_clockwise < 0.0:
         raise ValueError(f"Motion '{scenario.name}' requires omega_bc_clockwise >= 0.")
-
