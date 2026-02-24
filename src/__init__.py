@@ -1,0 +1,2 @@
+"""Amertat technical assignment package."""
+

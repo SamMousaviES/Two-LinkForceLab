@@ -1,0 +1,72 @@
+{
+  "units": {
+    "length": "m",
+    "mass": "kg",
+    "angular_velocity": "rad/s"
+  },
+  "geometry_scenarios": [
+    {
+      "name": "G1",
+      "length_ab_m": 1.0,
+      "length_bc_m": 0.6,
+      "mass_b_kg": 3.0,
+      "mass_c_kg": 1.0
+    },
+    {
+      "name": "G2",
+      "length_ab_m": 1.2,
+      "length_bc_m": 0.8,
+      "mass_b_kg": 3.0,
+      "mass_c_kg": 1.2
+    },
+    {
+      "name": "G3",
+      "length_ab_m": 0.9,
+      "length_bc_m": 1.0,
+      "mass_b_kg": 2.5,
+      "mass_c_kg": 1.5
+    },
+    {
+      "name": "G4",
+      "length_ab_m": 1.5,
+      "length_bc_m": 0.7,
+      "mass_b_kg": 4.0,
+      "mass_c_kg": 1.0
+    },
+    {
+      "name": "G5",
+      "length_ab_m": 1.1,
+      "length_bc_m": 1.1,
+      "mass_b_kg": 3.5,
+      "mass_c_kg": 2.0
+    }
+  ],
+  "motion_scenarios": [
+    {
+      "name": "M1",
+      "omega_ab_rad_s": 2.0,
+      "omega_bc_clockwise_rad_s": 4.0
+    },
+    {
+      "name": "M2",
+      "omega_ab_rad_s": 3.0,
+      "omega_bc_clockwise_rad_s": 2.0
+    },
+    {
+      "name": "M3",
+      "omega_ab_rad_s": 4.0,
+      "omega_bc_clockwise_rad_s": 4.0
+    },
+    {
+      "name": "M4",
+      "omega_ab_rad_s": 5.0,
+      "omega_bc_clockwise_rad_s": 3.0
+    },
+    {
+      "name": "M5",
+      "omega_ab_rad_s": 6.0,
+      "omega_bc_clockwise_rad_s": 5.0
+    }
+  ]
+}
+
