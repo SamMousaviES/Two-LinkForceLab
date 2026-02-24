@@ -30,6 +30,48 @@ Flags:
 - `output/engineering_insight.md`: extreme cases and primary parameter driver.
 - `output/animations/*.gif`: mechanism animation for extreme case(s).
 
+## 25 Case Summary Table
+The table below summarizes all `5 x 5 = 25` geometry-motion combinations using the generated metrics.
+
+| Case | Max Tension (N) | Angle at Max Tension (deg) | Max Compression (N) | Angle at Max Compression (deg) | Explanation |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `G1__M1` | 25.60 | 0.0 | 6.40 | 180.0 | Low-speed baseline for G1; forces stay tensile over full rotation. |
+| `G1__M2` | 38.40 | 0.0 | 33.60 | 108.0 | Higher AB speed lifts the full curve; no compressive region appears. |
+| `G1__M3` | 73.60 | 0.0 | 54.40 | 90.0 | Increased AB and BC speeds amplify inertia and raise peak tension. |
+| `G1__M4` | 105.40 | 0.0 | 94.60 | 112.5 | Fast AB rotation dominates, creating high tensile loading throughout. |
+| `G1__M5` | 159.00 | 0.0 | 129.00 | 294.5 | Highest-speed G1 case with strong tensile-dominant behavior. |
+| `G2__M1` | 35.52 | 240.0 | 4.80 | 180.0 | Larger geometry/mass than G1 increases loads; minimum is near zero tension. |
+| `G2__M2` | 49.20 | 0.0 | 41.52 | 324.0 | Moderate-speed case stays tensile with elevated force floor. |
+| `G2__M3` | 96.00 | 0.0 | 65.28 | 90.0 | Higher speeds significantly increase both peak and minimum tensile levels. |
+| `G2__M4` | 134.64 | 0.0 | 117.36 | 337.5 | AB-speed-driven inertia raises loads while preserving positive axial force. |
+| `G2__M5` | 205.44 | 0.0 | 157.44 | 294.5 | High speed plus larger geometry yields very high tensile response. |
+| `G3__M1` | 38.40 | 0.0 | -9.60 | 60.0 | First true compression case; BC contribution overcomes AB tension locally. |
+| `G3__M2` | 38.40 | 0.0 | 26.40 | 108.0 | Slightly faster AB removes negative compression and restores all-tension behavior. |
+| `G3__M3` | 81.60 | 0.0 | 33.60 | 90.0 | Speed increase grows tensile peaks while keeping minima positive. |
+| `G3__M4` | 103.50 | 0.0 | 76.50 | 337.5 | High AB speed shifts minimum later in cycle and raises overall load level. |
+| `G3__M5` | 167.10 | 0.0 | 92.10 | 294.5 | Very high-speed case with large inertia-driven tensile force. |
+| `G4__M1` | 41.20 | 240.0 | 18.80 | 180.0 | Long AB and heavier B mass increase baseline tensile demand. |
+| `G4__M2` | 70.30 | 0.0 | 64.70 | 108.0 | Speed increase raises both peak and minimum axial force substantially. |
+| `G4__M3` | 131.20 | 0.0 | 108.80 | 90.0 | Strong tensile-dominant response from geometry and motion together. |
+| `G4__M4` | 193.80 | 0.0 | 181.20 | 112.5 | Near-extreme loading where AB inertial term is strongly dominant. |
+| `G4__M5` | 287.50 | 0.0 | 252.50 | 294.5 | Global maximum tension case across all 25 combinations. |
+| `G5__M1` | 59.40 | 0.0 | -11.00 | 180.0 | Global maximum compression case at low speed due to distal mass effects. |
+| `G5__M2` | 63.25 | 0.0 | 45.65 | 108.0 | Increased AB speed removes negative compression and raises load floor. |
+| `G5__M3` | 132.00 | 0.0 | 61.60 | 90.0 | Higher-speed regime with much larger tension peaks. |
+| `G5__M4` | 171.05 | 225.0 | 131.45 | 337.5 | High-speed case with phase-shifted peak angle and fully tensile cycle. |
+| `G5__M5` | 272.80 | 0.0 | 162.80 | 294.5 | One of the highest tensile cases, dominated by speed-induced inertia. |
+
+## Animation Cases (2 GIF Files)
+These two animations highlight the global extreme combinations.
+
+| GIF File | Case | What It Shows | Why It Matters |
+| --- | --- | --- | --- |
+| `output/animations/G4__M5_max_tension.gif` | `G4__M5` | Motion of AB-BC at the highest tensile-load combination. | Confirms the worst tensile demand and the phase where AB carries the largest pull. |
+| `output/animations/G5__M1_max_compression.gif` | `G5__M1` | Motion of AB-BC at the highest compressive-load combination. | Shows the condition where axial force in AB becomes most negative (compression). |
+
+![Max tension animation](output/animations/G4__M5_max_tension.gif)
+![Max compression animation](output/animations/G5__M1_max_compression.gif)
+
 ## Notes
 - Units expected in `scenarios.json`: meters, kilograms, radians/second.
 - `omega_bc_clockwise_rad_s` is a positive magnitude, internally applied as clockwise rotation.

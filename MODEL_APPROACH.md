@@ -3,36 +3,68 @@
 ## 1) Kinematics convention
 - 2D Cartesian frame, origin at point `A`.
 - Zero angle is vertical upward.
-- `AB` angle `theta` is positive counterclockwise.
-- `BC` angle `psi` is positive counterclockwise, but assignment says `BC` rotates clockwise, so `psi_dot = -omega_bc_clockwise`.
+- `AB` angle $\theta$ is positive counterclockwise.
+- `BC` angle $\psi$ is positive counterclockwise, but assignment says `BC` rotates clockwise, so:
+
+$$
+\dot{\psi} = -\omega_{BC,\mathrm{cw}}
+$$
 
 Unit vector from vertical-up angle:
-`u(angle) = [-sin(angle), cos(angle)]`
+
+$$
+\mathbf{u}(\alpha) =
+\begin{bmatrix}
+-\sin(\alpha) \\
+\cos(\alpha)
+\end{bmatrix}
+$$
 
 ## 2) Position, velocity, acceleration
 For each time sample over one full `AB` turn:
-- `r_B = L_AB * u(theta)`
-- `r_C = r_B + L_BC * u(psi)`
+
+$$
+\mathbf{r}_B = L_{AB}\,\mathbf{u}(\theta)
+$$
+
+$$
+\mathbf{r}_C = \mathbf{r}_B + L_{BC}\,\mathbf{u}(\psi)
+$$
 
 With constant angular speeds:
-- `v_B = L_AB * d(u(theta))/dt`
-- `a_B = L_AB * d2(u(theta))/dt2`
-- `v_C = v_B + L_BC * d(u(psi))/dt`
-- `a_C = a_B + L_BC * d2(u(psi))/dt2`
+
+$$
+\mathbf{v}_B = L_{AB}\,\frac{d\mathbf{u}(\theta)}{dt}, \qquad
+\mathbf{a}_B = L_{AB}\,\frac{d^2\mathbf{u}(\theta)}{dt^2}
+$$
+
+$$
+\mathbf{v}_C = \mathbf{v}_B + L_{BC}\,\frac{d\mathbf{u}(\psi)}{dt}, \qquad
+\mathbf{a}_C = \mathbf{a}_B + L_{BC}\,\frac{d^2\mathbf{u}(\psi)}{dt^2}
+$$
 
 ## 3) Axial force in AB
 Dynamic force from point masses:
-`F_dyn = M_b * a_B + M_c * a_C`
+
+$$
+\mathbf{F}_{\mathrm{dyn}} = M_b\,\mathbf{a}_B + M_c\,\mathbf{a}_C
+$$
 
 Project onto `AB` direction:
-`F_proj = dot(F_dyn, u_AB)`
+
+$$
+F_{\mathrm{proj}} = \mathbf{F}_{\mathrm{dyn}} \cdot \mathbf{u}_{AB}
+$$
 
 Sign convention in assignment:
 - Positive means tension
 - Negative means compression
 
 For this sign convention:
-`F_axial_AB = -F_proj`
+
+$$
+F_{AB,\mathrm{axial}} = -F_{\mathrm{proj}}
+$$
 
 The minus sign makes inward centripetal pull correspond to positive tension.
 
@@ -42,7 +74,6 @@ The minus sign makes inward centripetal pull correspond to positive tension.
 - Produce one force-angle line plot per combination.
 
 ## 5) Insight extraction
-- Highest tensile case: maximum of `F_axial_AB`.
-- Highest compressive case: minimum of `F_axial_AB`.
+- Highest tensile case: maximum of $F_{AB,\mathrm{axial}}$.
+- Highest compressive case: minimum of $F_{AB,\mathrm{axial}}$.
 - Primary driver: strongest absolute correlation with max absolute force across combinations.
-
