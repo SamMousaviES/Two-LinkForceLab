@@ -18,17 +18,10 @@ python -m pip install -r requirements.txt
 python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721
 ```
 
-Example for much longer animations:
-```bash
-python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721 --animation-cycles 8 --animation-fps 20
-```
-
 Flags:
 - `--scenarios`: path to the JSON input file that defines geometry and motion scenarios. Default: `scenarios.json`
 - `--output-dir`: directory where plots, CSV, insight report, and animations are written. Default: `output`
 - `--steps`: number of simulation samples over one full `AB` rotation (`0-360 deg`). Default: `721`
-- `--animation-cycles`: number of full mechanism cycles saved in each GIF. Default: `1`
-- `--animation-fps`: frame rate of saved GIF files. Default: `25`
 
 ## Generated outputs
 - `output/plots/*.png`: one line plot per combination.
@@ -73,11 +66,11 @@ These two animations highlight the global extreme combinations.
 
 | GIF File | Case | What It Shows | Why It Matters |
 | --- | --- | --- | --- |
-| `output/animations/G4__M5_max_tension_long.gif` | `G4__M5` | Motion of AB-BC at the highest tensile-load combination. | Confirms the worst tensile demand and the phase where AB carries the largest pull. |
-| `output/animations/G5__M1_max_compression_long.gif` | `G5__M1` | Motion of AB-BC at the highest compressive-load combination. | Shows the condition where axial force in AB becomes most negative (compression). |
+| `output/animations/G4__M5_max_tension.gif` | `G4__M5` | Motion of AB-BC at the highest tensile-load combination. | Confirms the worst tensile demand and the phase where AB carries the largest pull. |
+| `output/animations/G5__M1_max_compression.gif` | `G5__M1` | Motion of AB-BC at the highest compressive-load combination. | Shows the condition where axial force in AB becomes most negative (compression). |
 
-![Max tension animation](output/animations/G4__M5_max_tension_long.gif)
-![Max compression animation](output/animations/G5__M1_max_compression_long.gif)
+![Max tension animation](output/animations/G4__M5_max_tension.gif)
+![Max compression animation](output/animations/G5__M1_max_compression.gif)
 
 ## Notes
 - Units expected in `scenarios.json`: meters, kilograms, radians/second.

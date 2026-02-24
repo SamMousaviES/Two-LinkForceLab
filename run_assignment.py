@@ -35,18 +35,6 @@ def parse_args() -> argparse.Namespace:
         default=721,
         help="Number of simulation steps over 0-360 deg of AB.",
     )
-    parser.add_argument(
-        "--animation-cycles",
-        type=int,
-        default=1,
-        help="How many full mechanism cycles to include in each GIF.",
-    )
-    parser.add_argument(
-        "--animation-fps",
-        type=int,
-        default=25,
-        help="Frame rate for saved GIF animations.",
-    )
     return parser.parse_args()
 
 
@@ -89,19 +77,15 @@ def main() -> None:
     animations_dir = output_dir / "animations"
     animate_mechanism(
         result=max_tension_result,
-        output_path=animations_dir / f"{max_tension_result.combo_id}_max_tension_long.gif",
+        output_path=animations_dir / f"{max_tension_result.combo_id}_max_tension.gif",
         title=f"Max tension case: {max_tension_result.combo_id}",
-        cycles=args.animation_cycles,
-        fps=args.animation_fps,
     )
     if max_compression_result.combo_id != max_tension_result.combo_id:
         animate_mechanism(
             result=max_compression_result,
             output_path=animations_dir
-            / f"{max_compression_result.combo_id}_max_compression_long.gif",
+            / f"{max_compression_result.combo_id}_max_compression.gif",
             title=f"Max compression case: {max_compression_result.combo_id}",
-            cycles=args.animation_cycles,
-            fps=args.animation_fps,
         )
 
     print(f"Completed {len(results)} simulations.")

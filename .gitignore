@@ -11,7 +11,7 @@ env/
 
 output/plots/
 output/animations/*
-!output/animations/G4__M5_max_tension_long.gif
-!output/animations/G5__M1_max_compression_long.gif
+!output/animations/G4__M5_max_tension.gif
+!output/animations/G5__M1_max_compression.gif
 
 *.log
