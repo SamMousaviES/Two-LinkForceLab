@@ -28,4 +28,3 @@ python run_assignment.py --scenarios scenarios.json --output-dir output --steps 
 ## Notes
 - Units expected in `scenarios.json`: meters, kilograms, radians/second.
 - `omega_bc_clockwise_rad_s` is a positive magnitude, internally applied as clockwise rotation.
-
