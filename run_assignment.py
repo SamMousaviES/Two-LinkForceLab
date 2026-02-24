@@ -89,7 +89,7 @@ def main() -> None:
     animations_dir = output_dir / "animations"
     animate_mechanism(
         result=max_tension_result,
-        output_path=animations_dir / f"{max_tension_result.combo_id}_max_tension.gif",
+        output_path=animations_dir / f"{max_tension_result.combo_id}_max_tension_long.gif",
         title=f"Max tension case: {max_tension_result.combo_id}",
         cycles=args.animation_cycles,
         fps=args.animation_fps,
@@ -98,7 +98,7 @@ def main() -> None:
         animate_mechanism(
             result=max_compression_result,
             output_path=animations_dir
-            / f"{max_compression_result.combo_id}_max_compression.gif",
+            / f"{max_compression_result.combo_id}_max_compression_long.gif",
             title=f"Max compression case: {max_compression_result.combo_id}",
             cycles=args.animation_cycles,
             fps=args.animation_fps,
