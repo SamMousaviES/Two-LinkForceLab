@@ -1,8 +1,13 @@
 # Engineering Insight
 
 - Highest tensile load: `G4__M5` with `F = 287.500 N` at `AB angle = 0.0 deg`
-- Highest compressive load: `G5__M1` with `F = -11.000 N` at `AB angle = 60.0 deg`
+- Highest compressive load: `G5__M1` with `F = -11.000 N` at `AB angle = 180.0 deg`
 - Primary load driver in this scenario set: `omega_ab`
+
+## Quick Explanation
+- Positive axial force means link `AB` is in tension (pulled).
+- Negative axial force means link `AB` is in compression (pushed).
+- In this scenario set, `omega_ab` has the strongest linear trend with extreme load magnitude.
 
 ## Correlation Snapshot
 - `length_ab`: correlation = +0.282

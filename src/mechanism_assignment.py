@@ -361,6 +361,13 @@ def write_engineering_insight(results: list[SimulationResult], output_path: Path
         f"- `{name}`: correlation = {value:+.3f}" for name, value in correlations.items()
     )
 
+    quick_explanation = (
+        "## Quick Explanation\n"
+        "- Positive axial force means link `AB` is in tension (pulled).\n"
+        "- Negative axial force means link `AB` is in compression (pushed).\n"
+        f"- In this scenario set, `{primary_driver}` has the strongest linear trend with extreme load magnitude.\n\n"
+    )
+
     text = (
         "# Engineering Insight\n\n"
         f"- Highest tensile load: `{max_tension_result.combo_id}` with `F = {max_tension_value:.3f} N` "
@@ -368,6 +375,7 @@ def write_engineering_insight(results: list[SimulationResult], output_path: Path
         f"- Highest compressive load: `{max_compression_result.combo_id}` with "
         f"`F = {max_compression_value:.3f} N` at `AB angle = {max_compression_angle:.1f} deg`\n"
         f"- Primary load driver in this scenario set: `{primary_driver}`\n\n"
+        f"{quick_explanation}"
         "## Correlation Snapshot\n"
         f"{correlation_lines}\n"
     )
