@@ -159,7 +159,7 @@ def simulate_one_rotation(
     theta = np.linspace(0.0, 2.0 * np.pi, num_steps)
     theta_deg = np.rad2deg(theta)
 
-    # With constant omega_ab, time is directly obtained from theta = omega * t.
+    # Convert angle samples to time. With constant omega_ab, time is directly obtained from theta = omega * t.
     time = theta / motion.omega_ab
 
     # Assignment says BC rotates clockwise.

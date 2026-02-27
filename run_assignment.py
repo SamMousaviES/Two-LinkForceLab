@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+"""Command-line entry point for the full assignment workflow.
+
+This script orchestrates:
+1) Loading scenarios.
+2) Running all simulations.
+3) Creating plots, summary files, and animations.
+4) Printing a compact terminal summary.
+"""
+
 import argparse
 from pathlib import Path
 
@@ -16,6 +25,8 @@ from src.mechanism_assignment import (
 
 
 def parse_args() -> argparse.Namespace:
+    """Define and parse command-line arguments."""
+
     parser = argparse.ArgumentParser(
         description="Amertat short technical assignment solver."
     )
@@ -39,16 +50,28 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run the end-to-end simulation and reporting pipeline."""
+
+    # Parse user-provided CLI options (or defaults).
     args = parse_args()
+
+    # Resolve absolute paths for robustness across working directories.
     scenario_path = Path(args.scenarios).resolve()
     output_dir = Path(args.output_dir).resolve()
+
+    # Ensure output directory exists before writing files.
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Load all geometry and motion inputs from JSON.
     geometries, motions = load_scenarios(scenario_path)
+
+    # Simulate every geometry-motion combination.
     results = simulate_all(geometries=geometries, motions=motions, num_steps=args.steps)
 
+    # Find global tension/compression extreme cases across all combinations.
     max_tension_result, max_compression_result = find_extremes(results)
 
+    # Generate one plot per combination, highlighting extremes with distinct colors.
     plots_dir = output_dir / "plots"
     for result in results:
         color = "steelblue"
@@ -62,6 +85,7 @@ def main() -> None:
             color=color,
         )
 
+    # Generate a compact grid figure with all combinations together.
     plot_comparison_grid(
         results=results,
         geometries=geometries,
@@ -71,15 +95,19 @@ def main() -> None:
         max_compression_id=max_compression_result.combo_id,
     )
 
+    # Write machine-readable metrics and a short engineering narrative.
     write_metrics_csv(results, output_path=output_dir / "summary_metrics.csv")
     write_engineering_insight(results, output_path=output_dir / "engineering_insight.md")
 
+    # Animate the max-tension case (always required).
     animations_dir = output_dir / "animations"
     animate_mechanism(
         result=max_tension_result,
         output_path=animations_dir / f"{max_tension_result.combo_id}_max_tension.gif",
         title=f"Max tension case: {max_tension_result.combo_id}",
     )
+
+    # Animate max-compression only if it is a different case.
     if max_compression_result.combo_id != max_tension_result.combo_id:
         animate_mechanism(
             result=max_compression_result,
@@ -88,6 +116,7 @@ def main() -> None:
             title=f"Max compression case: {max_compression_result.combo_id}",
         )
 
+    # Print quick run summary in terminal.
     print(f"Completed {len(results)} simulations.")
     print(f"Output directory: {output_dir}")
     print(
@@ -103,4 +132,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # Standard Python entry-point guard.
     main()
