@@ -12,7 +12,8 @@ Modeling assumptions match the assignment statement:
 - Planar rigid links.
 - Lumped masses at B and C.
 - Constant angular velocities.
-- No gravity/aerodynamic/deformation effects.
+- Optional uniform gravity term (configurable).
+- No aerodynamic/deformation effects.
 """
 
 from dataclasses import dataclass
@@ -56,6 +57,7 @@ class SimulationResult:
     length_bc: float
     mass_b: float
     mass_c: float
+    gravity_m_s2: float
     omega_ab: float
     omega_bc_clockwise: float
     time: np.ndarray
@@ -125,6 +127,7 @@ def simulate_all(
     geometries: Iterable[GeometryScenario],
     motions: Iterable[MotionScenario],
     num_steps: int = 721,
+    gravity_m_s2: float = 9.81,
 ) -> list[SimulationResult]:
     """Run all Cartesian combinations of geometry and motion scenarios."""
 
@@ -136,6 +139,7 @@ def simulate_all(
                     geometry=geometry,
                     motion=motion,
                     num_steps=num_steps,
+                    gravity_m_s2=gravity_m_s2,
                 )
             )
     return results
@@ -145,15 +149,18 @@ def simulate_one_rotation(
     geometry: GeometryScenario,
     motion: MotionScenario,
     num_steps: int = 721,
+    gravity_m_s2: float = 9.81,
 ) -> SimulationResult:
     """Simulate one full 0-360 deg rotation of AB for one geometry-motion pair.
 
     Steps:
     1) Build angular/time arrays.
     2) Compute kinematics of B and C.
-    3) Compute dynamic force required for lumped masses.
+    3) Compute force required for lumped masses (inertia + gravity).
     4) Project onto AB axis to get signed axial force in AB.
     """
+    if gravity_m_s2 < 0.0:
+        raise ValueError("gravity_m_s2 must be >= 0.")
 
     # AB angle sampled over one full turn.
     theta = np.linspace(0.0, 2.0 * np.pi, num_steps)
@@ -185,10 +192,20 @@ def simulate_one_rotation(
     # Net dynamic force required to accelerate masses at B and C.
     dynamic_force = geometry.mass_b * a_b + geometry.mass_c * a_c
 
+    # Total gravity force on lumped masses (negative y direction).
+    total_gravity_force = np.array(
+        [0.0, -(geometry.mass_b + geometry.mass_c) * gravity_m_s2],
+        dtype=float,
+    )
+
+    # Net force the mechanism must provide to satisfy m*a with gravity:
+    # F_links + F_gravity = m*a  ->  F_links = m*a - F_gravity
+    required_link_force = dynamic_force - total_gravity_force
+
     # Positive axial force means tension in AB.
-    # Dynamic projection gives force on masses along AB, so sign is reversed.
+    # Projection gives force applied to masses along AB, so sign is reversed.
     # np.einsum("ij,ij->i", ...) computes row-wise dot products efficiently.
-    axial_force_ab = -np.einsum("ij,ij->i", dynamic_force, u_ab)
+    axial_force_ab = -np.einsum("ij,ij->i", required_link_force, u_ab)
 
     return SimulationResult(
         geometry_name=geometry.name,
@@ -197,6 +214,7 @@ def simulate_one_rotation(
         length_bc=geometry.length_bc,
         mass_b=geometry.mass_b,
         mass_c=geometry.mass_c,
+        gravity_m_s2=gravity_m_s2,
         omega_ab=motion.omega_ab,
         omega_bc_clockwise=motion.omega_bc_clockwise,
         time=time,

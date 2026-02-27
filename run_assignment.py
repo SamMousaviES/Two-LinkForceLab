@@ -46,6 +46,12 @@ def parse_args() -> argparse.Namespace:
         default=721,
         help="Number of simulation steps over 0-360 deg of AB.",
     )
+    parser.add_argument(
+        "--gravity",
+        type=float,
+        default=9.81,
+        help="Gravity magnitude in m/s^2. Use 0 to disable gravity effects.",
+    )
     return parser.parse_args()
 
 
@@ -54,6 +60,8 @@ def main() -> None:
 
     # Parse user-provided CLI options (or defaults).
     args = parse_args()
+    if args.gravity < 0.0:
+        raise ValueError("--gravity must be >= 0.")
 
     # Resolve absolute paths for robustness across working directories.
     scenario_path = Path(args.scenarios).resolve()
@@ -66,7 +74,12 @@ def main() -> None:
     geometries, motions = load_scenarios(scenario_path)
 
     # Simulate every geometry-motion combination.
-    results = simulate_all(geometries=geometries, motions=motions, num_steps=args.steps)
+    results = simulate_all(
+        geometries=geometries,
+        motions=motions,
+        num_steps=args.steps,
+        gravity_m_s2=args.gravity,
+    )
 
     # Find global tension/compression extreme cases across all combinations.
     max_tension_result, max_compression_result = find_extremes(results)
@@ -119,6 +132,7 @@ def main() -> None:
     # Print quick run summary in terminal.
     print(f"Completed {len(results)} simulations.")
     print(f"Output directory: {output_dir}")
+    print(f"Gravity used: {args.gravity:.3f} m/s^2")
     print(
         "Highest tensile case:",
         max_tension_result.combo_id,
