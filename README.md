@@ -1,93 +1,123 @@
 # Amertat Short Technical Assignment
 
-This repository simulates a planar two-link rotating mechanism and computes the signed axial force in link `AB` for all geometry-motion combinations.
+This repository simulates a planar two-link rotating mechanism and computes the signed axial force in link `AB` for all geometry-motion combinations. It now supports a global gravity setting in `scenarios.json`, explicit gravity on/off labeling in all reports, and saved comparison exports for both gravity states.
 
-## What is included
-- `run_assignment.py`: entry-point script.
-- `src/mechanism_assignment.py`: kinematics, dynamics, plotting, animation, and reporting.
-- `scenarios.json`: example input with 5 geometry and 5 motion sets (25 combinations).
-- `MODEL_APPROACH.md`: concise derivation and sign convention.
+## What Is Included
+- `run_assignment.py`: command-line entry point for the full workflow.
+- `src/mechanism_assignment.py`: scenario parsing, simulation, plotting, animation, and reporting.
+- `scenarios.json`: example input with 5 geometry sets and 5 motion sets.
+- `MODEL_APPROACH.md`: derivation, sign convention, and gravity-force model.
+- `output/`: current generated outputs for the active `scenarios.json`.
+- `output_gravity_on/`: saved reference export with gravity on.
+- `output_gravity_off/`: saved reference export with gravity off.
 
 ## Setup
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-## Run
-```bash
-python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721
-```
+## Input Schema
+The input file is split into:
+- `gravity`: one global gravity configuration for the full run
+- `geometry_scenarios`: link lengths and point masses
+- `motion_scenarios`: angular velocities for `AB` and `BC`
 
-Flags:
-- `--scenarios`: path to the JSON input file that defines geometry and motion scenarios. Default: `scenarios.json`
-- `--output-dir`: directory where plots, CSV, insight report, and animations are written. Default: `output`
-- `--steps`: number of simulation samples over one full `AB` rotation (`0-360 deg`). Default: `721`
-- `--gravity`: optional global gravity override in `m/s^2`. If omitted, the run uses the top-level JSON gravity settings. Use `0` to force gravity off for all scenarios.
-
-## Global Gravity Setting
-Gravity is configured once at the top level of `scenarios.json`.
-
+Example:
 ```json
-"gravity": {
-  "enabled": true,
-  "gravity_m_s2": 9.81
+{
+  "gravity": {
+    "enabled": false,
+    "gravity_m_s2": 9.81
+  },
+  "geometry_scenarios": [
+    {
+      "name": "G1",
+      "length_ab_m": 1.0,
+      "length_bc_m": 0.6,
+      "mass_b_kg": 3.0,
+      "mass_c_kg": 1.0
+    }
+  ],
+  "motion_scenarios": [
+    {
+      "name": "M1",
+      "omega_ab_rad_s": 2.0,
+      "omega_bc_clockwise_rad_s": 4.0
+    }
+  ]
 }
 ```
 
 Notes:
-- `enabled: false` turns gravity off for the entire scenario set.
-- `gravity_m_s2` sets the gravity magnitude used when gravity is enabled.
-- If you pass `--gravity`, it overrides every scenario in the run.
+- `gravity.enabled: false` turns gravity off for the full scenario set.
+- `gravity.gravity_m_s2` sets the gravity magnitude when gravity is enabled.
+- Gravity acts in the `-y` direction.
+- `omega_bc_clockwise_rad_s` is provided as a positive clockwise magnitude and is applied internally with clockwise sign.
 
-## Generated outputs
-- `output/plots/*.png`: one line plot per combination, with gravity state in the title.
-- `output/all_combinations_grid.png`: comparison grid for all combinations, with gravity state in each subplot title.
-- `output/summary_metrics.csv`: max tension/compression per combination, including gravity status and applied gravity value.
-- `output/engineering_insight.md`: extreme cases, the global gravity setting, and the primary parameter driver.
-- `output/animations/*.gif`: mechanism animation for extreme case(s), with gravity state in the title and overlay.
+## Run
+Default run:
+```bash
+python run_assignment.py --scenarios scenarios.json --output-dir output --steps 721
+```
 
-## 25 Case Summary Table
-The table below summarizes all `5 x 5 = 25` geometry-motion combinations using the generated metrics.
+Useful overrides:
+```bash
+python run_assignment.py --scenarios scenarios.json --output-dir output_gravity_off --steps 721 --gravity 0
+python run_assignment.py --scenarios scenarios.json --output-dir output_gravity_on --steps 721 --gravity 9.81
+```
 
-| Case | G Values (`L_AB` m, `L_BC` m, `M_b` kg, `M_c` kg) | M Values (`omega_AB` rad/s, `omega_BC,cw` rad/s) | Max Tension (N) | Angle at Max Tension (deg) | Max Compression (N) | Angle at Max Compression (deg) | Explanation |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `G1__M1` | `1.0, 0.6, 3.0, 1.0` | `2.0, 4.0` | 25.60 | 0.0 | 6.40 | 180.0 | Low-speed baseline for G1; forces stay tensile over full rotation. |
-| `G1__M2` | `1.0, 0.6, 3.0, 1.0` | `3.0, 2.0` | 38.40 | 0.0 | 33.60 | 108.0 | Higher AB speed lifts the full curve; no compressive region appears. |
-| `G1__M3` | `1.0, 0.6, 3.0, 1.0` | `4.0, 4.0` | 73.60 | 0.0 | 54.40 | 90.0 | Increased AB and BC speeds amplify inertia and raise peak tension. |
-| `G1__M4` | `1.0, 0.6, 3.0, 1.0` | `5.0, 3.0` | 105.40 | 0.0 | 94.60 | 112.5 | Fast AB rotation dominates, creating high tensile loading throughout. |
-| `G1__M5` | `1.0, 0.6, 3.0, 1.0` | `6.0, 5.0` | 159.00 | 0.0 | 129.00 | 294.5 | Highest-speed G1 case with strong tensile-dominant behavior. |
-| `G2__M1` | `1.2, 0.8, 3.0, 1.2` | `2.0, 4.0` | 35.52 | 240.0 | 4.80 | 180.0 | Larger geometry/mass than G1 increases loads; minimum is near zero tension. |
-| `G2__M2` | `1.2, 0.8, 3.0, 1.2` | `3.0, 2.0` | 49.20 | 0.0 | 41.52 | 324.0 | Moderate-speed case stays tensile with elevated force floor. |
-| `G2__M3` | `1.2, 0.8, 3.0, 1.2` | `4.0, 4.0` | 96.00 | 0.0 | 65.28 | 90.0 | Higher speeds significantly increase both peak and minimum tensile levels. |
-| `G2__M4` | `1.2, 0.8, 3.0, 1.2` | `5.0, 3.0` | 134.64 | 0.0 | 117.36 | 337.5 | AB-speed-driven inertia raises loads while preserving positive axial force. |
-| `G2__M5` | `1.2, 0.8, 3.0, 1.2` | `6.0, 5.0` | 205.44 | 0.0 | 157.44 | 294.5 | High speed plus larger geometry yields very high tensile response. |
-| `G3__M1` | `0.9, 1.0, 2.5, 1.5` | `2.0, 4.0` | 38.40 | 0.0 | -9.60 | 60.0 | First true compression case; BC contribution overcomes AB tension locally. |
-| `G3__M2` | `0.9, 1.0, 2.5, 1.5` | `3.0, 2.0` | 38.40 | 0.0 | 26.40 | 108.0 | Slightly faster AB removes negative compression and restores all-tension behavior. |
-| `G3__M3` | `0.9, 1.0, 2.5, 1.5` | `4.0, 4.0` | 81.60 | 0.0 | 33.60 | 90.0 | Speed increase grows tensile peaks while keeping minima positive. |
-| `G3__M4` | `0.9, 1.0, 2.5, 1.5` | `5.0, 3.0` | 103.50 | 0.0 | 76.50 | 337.5 | High AB speed shifts minimum later in cycle and raises overall load level. |
-| `G3__M5` | `0.9, 1.0, 2.5, 1.5` | `6.0, 5.0` | 167.10 | 0.0 | 92.10 | 294.5 | Very high-speed case with large inertia-driven tensile force. |
-| `G4__M1` | `1.5, 0.7, 4.0, 1.0` | `2.0, 4.0` | 41.20 | 240.0 | 18.80 | 180.0 | Long AB and heavier B mass increase baseline tensile demand. |
-| `G4__M2` | `1.5, 0.7, 4.0, 1.0` | `3.0, 2.0` | 70.30 | 0.0 | 64.70 | 108.0 | Speed increase raises both peak and minimum axial force substantially. |
-| `G4__M3` | `1.5, 0.7, 4.0, 1.0` | `4.0, 4.0` | 131.20 | 0.0 | 108.80 | 90.0 | Strong tensile-dominant response from geometry and motion together. |
-| `G4__M4` | `1.5, 0.7, 4.0, 1.0` | `5.0, 3.0` | 193.80 | 0.0 | 181.20 | 112.5 | Near-extreme loading where AB inertial term is strongly dominant. |
-| `G4__M5` | `1.5, 0.7, 4.0, 1.0` | `6.0, 5.0` | 287.50 | 0.0 | 252.50 | 294.5 | Global maximum tension case across all 25 combinations. |
-| `G5__M1` | `1.1, 1.1, 3.5, 2.0` | `2.0, 4.0` | 59.40 | 0.0 | -11.00 | 180.0 | Global maximum compression case at low speed due to distal mass effects. |
-| `G5__M2` | `1.1, 1.1, 3.5, 2.0` | `3.0, 2.0` | 63.25 | 0.0 | 45.65 | 108.0 | Increased AB speed removes negative compression and raises load floor. |
-| `G5__M3` | `1.1, 1.1, 3.5, 2.0` | `4.0, 4.0` | 132.00 | 0.0 | 61.60 | 90.0 | Higher-speed regime with much larger tension peaks. |
-| `G5__M4` | `1.1, 1.1, 3.5, 2.0` | `5.0, 3.0` | 171.05 | 225.0 | 131.45 | 337.5 | High-speed case with phase-shifted peak angle and fully tensile cycle. |
-| `G5__M5` | `1.1, 1.1, 3.5, 2.0` | `6.0, 5.0` | 272.80 | 0.0 | 162.80 | 294.5 | One of the highest tensile cases, dominated by speed-induced inertia. |
+Flags:
+- `--scenarios`: path to the JSON input file. Default: `scenarios.json`
+- `--output-dir`: destination folder for plots, animations, and reports. Default: `output`
+- `--steps`: number of samples over one full `AB` rotation. Default: `721`
+- `--gravity`: optional global gravity override in `m/s^2`. If omitted, the run uses the top-level JSON gravity setting. Use `0` to force gravity off.
 
-## Animation Cases (2 GIF Files)
-These two animations highlight the global extreme combinations.
+## Generated Outputs
+Each run produces:
+- `plots/*.png`: one force-vs-angle plot per geometry-motion combination
+- `all_combinations_grid.png`: a compact comparison grid across all cases
+- `summary_metrics.csv`: peak tension/compression per case, including `gravity_status` and `gravity_m_s2`
+- `engineering_insight.md`: global extremes, gravity state, and a simple driver ranking
+- `animations/*.gif`: GIFs for the highest-tension and highest-compression cases
 
-| GIF File | Case | What It Shows | Why It Matters |
-| --- | --- | --- | --- |
-| `output/animations/G4__M5_max_tension.gif` | `G4__M5` | Motion of AB-BC at the highest tensile-load combination. | Confirms the worst tensile demand and the phase where AB carries the largest pull. |
-| `output/animations/G5__M1_max_compression.gif` | `G5__M1` | Motion of AB-BC at the highest compressive-load combination. | Shows the condition where axial force in AB becomes most negative (compression). |
+Gravity state is made explicit in:
+- plot titles
+- grid subplot titles
+- GIF titles and overlays
+- `summary_metrics.csv`
+- `engineering_insight.md`
+- terminal run summary
 
-![Max tension animation](output/animations/G4__M5_max_tension.gif)
-![Max compression animation](output/animations/G5__M1_max_compression.gif)
+## Included Result Sets
+The repository currently includes three output folders:
+- `output/`: generated from the current `scenarios.json`
+- `output_gravity_on/`: saved comparison export with gravity `ON (9.810 m/s^2)`
+- `output_gravity_off/`: saved comparison export with gravity `OFF`
 
-## Notes
-- Units expected in `scenarios.json`: meters, kilograms, radians/second, and meters/second^2 for gravity.
-- `omega_bc_clockwise_rad_s` is a positive magnitude, internally applied as clockwise rotation.
+At the moment, the committed `scenarios.json` has:
+```json
+"gravity": {
+  "enabled": false,
+  "gravity_m_s2": 9.81
+}
+```
+
+So the tracked `output/` folder currently corresponds to the gravity-off case.
+
+## Modeling Notes
+- Positive axial force means tension in link `AB`.
+- Negative axial force means compression in link `AB`.
+- The code applies gravity as a downward force vector `[0, -m g]`.
+- With gravity toggled on, the axial-force result differs from the gravity-off case by the projection of that downward load onto the current `AB` direction.
+
+## Quick File Guide
+- `output/engineering_insight.md`: fastest high-level summary of the current run
+- `output/summary_metrics.csv`: best machine-readable summary of all 25 cases
+- `output_gravity_on/engineering_insight.md`: saved high-level summary for gravity on
+- `output_gravity_off/engineering_insight.md`: saved high-level summary for gravity off
+
+## Units
+- length: meters
+- mass: kilograms
+- angular velocity: radians/second
+- gravity: meters/second^2
