@@ -47,6 +47,22 @@ class MotionScenario:
     omega_bc_clockwise: float
 
 
+@dataclass(frozen=True)
+class GravityConfig:
+    """Global gravity setting loaded from the scenarios JSON file."""
+
+    enabled: bool = True
+    gravity_m_s2: float = 9.81
+
+    @property
+    def applied_gravity_m_s2(self) -> float:
+        """Return the effective gravity used for the full scenario set."""
+
+        if not self.enabled or np.isclose(self.gravity_m_s2, 0.0):
+            return 0.0
+        return self.gravity_m_s2
+
+
 @dataclass
 class SimulationResult:
     """Stores all time-history outputs for a single geometry-motion combination."""
@@ -75,17 +91,40 @@ class SimulationResult:
         """Stable ID used in filenames/tables, e.g., G3__M2."""
         return f"{self.geometry_name}__{self.motion_name}"
 
+    @property
+    def gravity_is_on(self) -> bool:
+        """Whether gravity was applied for this simulation result."""
 
-def load_scenarios(path: Path) -> tuple[list[GeometryScenario], list[MotionScenario]]:
+        return not np.isclose(self.gravity_m_s2, 0.0)
+
+    @property
+    def gravity_label(self) -> str:
+        """Human-readable gravity state for reports and plots."""
+
+        return format_gravity_state(self.gravity_m_s2)
+
+
+def load_scenarios(path: Path) -> tuple[list[GeometryScenario], list[MotionScenario], GravityConfig]:
     """Read and validate scenario inputs from JSON.
 
     Expected JSON keys:
+    - gravity: global gravity settings dictionary
     - geometry_scenarios: list of geometry dictionaries
     - motion_scenarios: list of motion dictionaries
     """
 
     with path.open("r", encoding="utf-8") as file:
         payload = json.load(file)
+
+    gravity_item = payload.get("gravity", {})
+    gravity_enabled = gravity_item.get("enabled", True)
+    if not isinstance(gravity_enabled, bool):
+        raise ValueError("The top-level gravity.enabled value must be a boolean.")
+    gravity = GravityConfig(
+        enabled=gravity_enabled,
+        gravity_m_s2=float(gravity_item.get("gravity_m_s2", 9.81)),
+    )
+    _validate_gravity(gravity)
 
     # Pull arrays (fallback to empty list so we can raise explicit errors below).
     geometry_items = payload.get("geometry_scenarios", [])
@@ -120,7 +159,7 @@ def load_scenarios(path: Path) -> tuple[list[GeometryScenario], list[MotionScena
         _validate_motion(scenario)
         motions.append(scenario)
 
-    return geometries, motions
+    return geometries, motions, gravity
 
 
 def simulate_all(
@@ -130,6 +169,9 @@ def simulate_all(
     gravity_m_s2: float = 9.81,
 ) -> list[SimulationResult]:
     """Run all Cartesian combinations of geometry and motion scenarios."""
+
+    if gravity_m_s2 < 0.0:
+        raise ValueError("gravity_m_s2 must be >= 0.")
 
     results: list[SimulationResult] = []
     for geometry in geometries:
@@ -189,18 +231,18 @@ def simulate_one_rotation(
     a_b = geometry.length_ab * _unit_second_time_derivative(theta, motion.omega_ab)
     a_c = a_b + geometry.length_bc * _unit_second_time_derivative(psi, -motion.omega_bc_clockwise)
 
-    # Net dynamic force required to accelerate masses at B and C.
-    dynamic_force = geometry.mass_b * a_b + geometry.mass_c * a_c
+    # Split force balance by point mass, then combine.
+    # B mass: F_links_on_B + Fg_B = m_b * a_b  ->  F_links_on_B = m_b * a_b - Fg_B
+    # C mass: F_links_on_C + Fg_C = m_c * a_c  ->  F_links_on_C = m_c * a_c - Fg_C
+    inertial_force_b = geometry.mass_b * a_b
+    inertial_force_c = geometry.mass_c * a_c
 
-    # Total gravity force on lumped masses (negative y direction).
-    total_gravity_force = np.array(
-        [0.0, -(geometry.mass_b + geometry.mass_c) * gravity_m_s2],
-        dtype=float,
-    )
+    gravity_force_b = np.array([0.0, -geometry.mass_b * gravity_m_s2], dtype=float)
+    gravity_force_c = np.array([0.0, -geometry.mass_c * gravity_m_s2], dtype=float)
 
-    # Net force the mechanism must provide to satisfy m*a with gravity:
-    # F_links + F_gravity = m*a  ->  F_links = m*a - F_gravity
-    required_link_force = dynamic_force - total_gravity_force
+    required_link_force_b = inertial_force_b - gravity_force_b
+    required_link_force_c = inertial_force_c - gravity_force_c
+    required_link_force = required_link_force_b + required_link_force_c
 
     # Positive axial force means tension in AB.
     # Projection gives force applied to masses along AB, so sign is reversed.
@@ -254,7 +296,9 @@ def plot_single_curve(result: SimulationResult, output_path: Path, color: str = 
     axis.axhline(0.0, color="black", linewidth=0.8, linestyle="--")
     axis.set_xlabel("Rotation angle of AB (deg)")
     axis.set_ylabel("Axial force in AB (N)")
-    axis.set_title(f"{result.geometry_name} x {result.motion_name}")
+    axis.set_title(
+        f"{result.geometry_name} x {result.motion_name}\nGravity {result.gravity_label}"
+    )
     axis.grid(True, alpha=0.25)
     fig.tight_layout()
     fig.savefig(output_path, dpi=180)
@@ -310,7 +354,10 @@ def plot_comparison_grid(
             axis.plot(result.theta_deg, result.axial_force_ab, color=color, linewidth=1.5)
             axis.axhline(0.0, color="black", linewidth=0.5, linestyle="--")
             axis.grid(True, alpha=0.20)
-            axis.set_title(f"{geometry.name}/{motion.name}", fontsize=8)
+            axis.set_title(
+                f"{geometry.name}/{motion.name}\n{_short_gravity_state(result.gravity_m_s2)}",
+                fontsize=8,
+            )
 
     for axis in axes_grid[-1, :]:
         axis.set_xlabel("AB angle (deg)")
@@ -335,6 +382,8 @@ def write_metrics_csv(results: list[SimulationResult], output_path: Path) -> Non
                 "combo_id",
                 "geometry",
                 "motion",
+                "gravity_status",
+                "gravity_m_s2",
                 "max_tension_N",
                 "angle_at_max_tension_deg",
                 "max_compression_N",
@@ -350,6 +399,8 @@ def write_metrics_csv(results: list[SimulationResult], output_path: Path) -> Non
                     result.combo_id,
                     result.geometry_name,
                     result.motion_name,
+                    "ON" if result.gravity_is_on else "OFF",
+                    float(result.gravity_m_s2),
                     float(result.axial_force_ab[max_tension_idx]),
                     float(result.theta_deg[max_tension_idx]),
                     float(result.axial_force_ab[max_compression_idx]),
@@ -374,6 +425,7 @@ def write_engineering_insight(results: list[SimulationResult], output_path: Path
     )
 
     primary_driver, correlations = infer_primary_driver(results)
+    gravity_label = max_tension_result.gravity_label
 
     correlation_lines = "\n".join(
         f"- `{name}`: correlation = {value:+.3f}" for name, value in correlations.items()
@@ -383,15 +435,18 @@ def write_engineering_insight(results: list[SimulationResult], output_path: Path
         "## Quick Explanation\n"
         "- Positive axial force means link `AB` is in tension (pulled).\n"
         "- Negative axial force means link `AB` is in compression (pushed).\n"
+        "- Gravity is applied globally for this scenario set and is reported explicitly as `ON` or `OFF`.\n"
         f"- In this scenario set, `{primary_driver}` has the strongest linear trend with extreme load magnitude.\n\n"
     )
 
     text = (
         "# Engineering Insight\n\n"
         f"- Highest tensile load: `{max_tension_result.combo_id}` with `F = {max_tension_value:.3f} N` "
-        f"at `AB angle = {max_tension_angle:.1f} deg`\n"
+        f"at `AB angle = {max_tension_angle:.1f} deg` | Gravity: `{max_tension_result.gravity_label}`\n"
         f"- Highest compressive load: `{max_compression_result.combo_id}` with "
-        f"`F = {max_compression_value:.3f} N` at `AB angle = {max_compression_angle:.1f} deg`\n"
+        f"`F = {max_compression_value:.3f} N` at `AB angle = {max_compression_angle:.1f} deg` "
+        f"| Gravity: `{max_compression_result.gravity_label}`\n"
+        f"- Gravity setting for this scenario set: `{gravity_label}`\n"
         f"- Primary load driver in this scenario set: `{primary_driver}`\n\n"
         f"{quick_explanation}"
         "## Correlation Snapshot\n"
@@ -417,6 +472,7 @@ def infer_primary_driver(results: list[SimulationResult]) -> tuple[str, dict[str
         "length_bc": np.array([result.length_bc for result in results], dtype=float),
         "mass_b": np.array([result.mass_b for result in results], dtype=float),
         "mass_c": np.array([result.mass_c for result in results], dtype=float),
+        "gravity_m_s2": np.array([result.gravity_m_s2 for result in results], dtype=float),
         "omega_ab": np.array([result.omega_ab for result in results], dtype=float),
         "omega_bc_clockwise": np.array([result.omega_bc_clockwise for result in results], dtype=float),
     }
@@ -491,7 +547,8 @@ def animate_mechanism(result: SimulationResult, output_path: Path, title: str) -
         angle_value = float(result.theta_deg[frame_index])
         info_text.set_text(
             f"AB angle: {angle_value:6.1f} deg\n"
-            f"Axial force: {force_value:8.2f} N"
+            f"Axial force: {force_value:8.2f} N\n"
+            f"Gravity: {result.gravity_label}"
         )
         return line, trace, info_text
 
@@ -545,3 +602,26 @@ def _validate_motion(scenario: MotionScenario) -> None:
         raise ValueError(f"Motion '{scenario.name}' requires omega_ab > 0.")
     if scenario.omega_bc_clockwise < 0.0:
         raise ValueError(f"Motion '{scenario.name}' requires omega_bc_clockwise >= 0.")
+
+
+def _validate_gravity(gravity: GravityConfig) -> None:
+    """Basic physical sanity checks for global gravity input."""
+
+    if gravity.gravity_m_s2 < 0.0:
+        raise ValueError("Global gravity.gravity_m_s2 must be >= 0.")
+
+
+def format_gravity_state(gravity_m_s2: float) -> str:
+    """Return a compact human-readable gravity state string."""
+
+    if np.isclose(gravity_m_s2, 0.0):
+        return "OFF"
+    return f"ON ({gravity_m_s2:.3f} m/s^2)"
+
+
+def _short_gravity_state(gravity_m_s2: float) -> str:
+    """Return a terse gravity label for compact subplot titles."""
+
+    if np.isclose(gravity_m_s2, 0.0):
+        return "g OFF"
+    return f"g={gravity_m_s2:.2f}"

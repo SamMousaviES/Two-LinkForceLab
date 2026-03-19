@@ -22,13 +22,29 @@ Flags:
 - `--scenarios`: path to the JSON input file that defines geometry and motion scenarios. Default: `scenarios.json`
 - `--output-dir`: directory where plots, CSV, insight report, and animations are written. Default: `output`
 - `--steps`: number of simulation samples over one full `AB` rotation (`0-360 deg`). Default: `721`
+- `--gravity`: optional global gravity override in `m/s^2`. If omitted, the run uses the top-level JSON gravity settings. Use `0` to force gravity off for all scenarios.
+
+## Global Gravity Setting
+Gravity is configured once at the top level of `scenarios.json`.
+
+```json
+"gravity": {
+  "enabled": true,
+  "gravity_m_s2": 9.81
+}
+```
+
+Notes:
+- `enabled: false` turns gravity off for the entire scenario set.
+- `gravity_m_s2` sets the gravity magnitude used when gravity is enabled.
+- If you pass `--gravity`, it overrides every scenario in the run.
 
 ## Generated outputs
-- `output/plots/*.png`: one line plot per combination.
-- `output/all_combinations_grid.png`: comparison grid for all combinations.
-- `output/summary_metrics.csv`: max tension/compression per combination.
-- `output/engineering_insight.md`: extreme cases and primary parameter driver.
-- `output/animations/*.gif`: mechanism animation for extreme case(s).
+- `output/plots/*.png`: one line plot per combination, with gravity state in the title.
+- `output/all_combinations_grid.png`: comparison grid for all combinations, with gravity state in each subplot title.
+- `output/summary_metrics.csv`: max tension/compression per combination, including gravity status and applied gravity value.
+- `output/engineering_insight.md`: extreme cases, the global gravity setting, and the primary parameter driver.
+- `output/animations/*.gif`: mechanism animation for extreme case(s), with gravity state in the title and overlay.
 
 ## 25 Case Summary Table
 The table below summarizes all `5 x 5 = 25` geometry-motion combinations using the generated metrics.
@@ -73,5 +89,5 @@ These two animations highlight the global extreme combinations.
 ![Max compression animation](output/animations/G5__M1_max_compression.gif)
 
 ## Notes
-- Units expected in `scenarios.json`: meters, kilograms, radians/second.
+- Units expected in `scenarios.json`: meters, kilograms, radians/second, and meters/second^2 for gravity.
 - `omega_bc_clockwise_rad_s` is a positive magnitude, internally applied as clockwise rotation.

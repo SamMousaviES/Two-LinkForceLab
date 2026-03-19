@@ -15,6 +15,7 @@ from pathlib import Path
 from src.mechanism_assignment import (
     animate_mechanism,
     find_extremes,
+    format_gravity_state,
     load_scenarios,
     plot_comparison_grid,
     plot_single_curve,
@@ -49,8 +50,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--gravity",
         type=float,
-        default=9.81,
-        help="Gravity magnitude in m/s^2. Use 0 to disable gravity effects.",
+        default=None,
+        help=(
+            "Optional global gravity override in m/s^2. "
+            "If omitted, the run uses the top-level JSON gravity settings. "
+            "Use 0 to force gravity off for all scenarios."
+        ),
     )
     return parser.parse_args()
 
@@ -60,7 +65,7 @@ def main() -> None:
 
     # Parse user-provided CLI options (or defaults).
     args = parse_args()
-    if args.gravity < 0.0:
+    if args.gravity is not None and args.gravity < 0.0:
         raise ValueError("--gravity must be >= 0.")
 
     # Resolve absolute paths for robustness across working directories.
@@ -71,14 +76,18 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Load all geometry and motion inputs from JSON.
-    geometries, motions = load_scenarios(scenario_path)
+    geometries, motions, gravity = load_scenarios(scenario_path)
+
+    applied_gravity_m_s2 = gravity.applied_gravity_m_s2
+    if args.gravity is not None:
+        applied_gravity_m_s2 = args.gravity
 
     # Simulate every geometry-motion combination.
     results = simulate_all(
         geometries=geometries,
         motions=motions,
         num_steps=args.steps,
-        gravity_m_s2=args.gravity,
+        gravity_m_s2=applied_gravity_m_s2,
     )
 
     # Find global tension/compression extreme cases across all combinations.
@@ -117,7 +126,10 @@ def main() -> None:
     animate_mechanism(
         result=max_tension_result,
         output_path=animations_dir / f"{max_tension_result.combo_id}_max_tension.gif",
-        title=f"Max tension case: {max_tension_result.combo_id}",
+        title=(
+            f"Max tension case: {max_tension_result.combo_id}\n"
+            f"Gravity {max_tension_result.gravity_label}"
+        ),
     )
 
     # Animate max-compression only if it is a different case.
@@ -126,22 +138,30 @@ def main() -> None:
             result=max_compression_result,
             output_path=animations_dir
             / f"{max_compression_result.combo_id}_max_compression.gif",
-            title=f"Max compression case: {max_compression_result.combo_id}",
+            title=(
+                f"Max compression case: {max_compression_result.combo_id}\n"
+                f"Gravity {max_compression_result.gravity_label}"
+            ),
         )
 
     # Print quick run summary in terminal.
     print(f"Completed {len(results)} simulations.")
     print(f"Output directory: {output_dir}")
-    print(f"Gravity used: {args.gravity:.3f} m/s^2")
+    if args.gravity is None:
+        print(f"Gravity from scenarios.json: {format_gravity_state(applied_gravity_m_s2)}")
+    else:
+        print(f"Gravity override: {format_gravity_state(args.gravity)}")
     print(
         "Highest tensile case:",
         max_tension_result.combo_id,
-        f"(max force = {max_tension_result.axial_force_ab.max():.3f} N)",
+        f"(max force = {max_tension_result.axial_force_ab.max():.3f} N, "
+        f"gravity {max_tension_result.gravity_label})",
     )
     print(
         "Highest compressive case:",
         max_compression_result.combo_id,
-        f"(min force = {max_compression_result.axial_force_ab.min():.3f} N)",
+        f"(min force = {max_compression_result.axial_force_ab.min():.3f} N, "
+        f"gravity {max_compression_result.gravity_label})",
     )
 
 

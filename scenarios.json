@@ -2,7 +2,12 @@
   "units": {
     "length": "m",
     "mass": "kg",
-    "angular_velocity": "rad/s"
+    "angular_velocity": "rad/s",
+    "acceleration": "m/s^2"
+  },
+  "gravity": {
+    "enabled": false,
+    "gravity_m_s2": 9.81
   },
   "geometry_scenarios": [
     {
@@ -69,4 +74,3 @@
     }
   ]
 }
-

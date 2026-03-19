@@ -44,16 +44,34 @@ $$
 $$
 
 ## 3) Axial force in AB
-Dynamic force from point masses:
+Inertial force from point masses:
 
 $$
-\mathbf{F}_{\mathrm{dyn}} = M_b\,\mathbf{a}_B + M_c\,\mathbf{a}_C
+\mathbf{F}_{\mathrm{inertia}} = M_b\,\mathbf{a}_B + M_c\,\mathbf{a}_C
 $$
 
-Project onto `AB` direction:
+If gravity is enabled for the scenario set, include:
 
 $$
-F_{\mathrm{proj}} = \mathbf{F}_{\mathrm{dyn}} \cdot \mathbf{u}_{AB}
+\mathbf{F}_{g} =
+\begin{bmatrix}
+0 \\
+-(M_b + M_c)\,g
+\end{bmatrix}
+$$
+
+So the net force that the links must provide is:
+
+$$
+\mathbf{F}_{\mathrm{links}} = \mathbf{F}_{\mathrm{inertia}} - \mathbf{F}_{g}
+$$
+
+If gravity is disabled globally, use `g = 0`, so this term vanishes.
+
+Project the required link force onto `AB` direction:
+
+$$
+F_{\mathrm{proj}} = \mathbf{F}_{\mathrm{links}} \cdot \mathbf{u}_{AB}
 $$
 
 Sign convention in assignment:
