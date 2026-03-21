@@ -1,2 +1,1 @@
-"""Amertat technical assignment package."""
-
+"""Two-LinkForceLab package."""

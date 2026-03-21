@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     """Define and parse command-line arguments."""
 
     parser = argparse.ArgumentParser(
-        description="Amertat short technical assignment solver."
+        description="Two-LinkForceLab solver."
     )
     parser.add_argument(
         "--scenarios",

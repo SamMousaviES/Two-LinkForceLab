@@ -1,4 +1,4 @@
-# Amertat Short Technical Assignment
+# Two-LinkForceLab
 
 This repository simulates a planar two-link rotating mechanism and computes the signed axial force in link `AB` for all geometry-motion combinations. It now supports a global gravity setting in `scenarios.json`, explicit gravity on/off labeling in all reports, and saved comparison exports for both gravity states.
 
